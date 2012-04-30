@@ -36,6 +36,13 @@ class Watchdog(object):
         self.settings = Settings()
         self.wait = self.settings.cp.getint("DEFAULT", "wait")
       
+    def human(self, num, power="Ki"):
+        powers = ["Ki", "Mi", "Gi", "Ti"]
+        while num >= 1000: #4 digits         
+            num /= 1024.0
+            power = powers[powers.index(power)+1]
+        return "%.1f %s" % (num, power)
+
     def run(self):
         while True:
             programs = self.settings.cp.sections()
@@ -45,10 +52,21 @@ class Watchdog(object):
                 cmd = self.settings.cp.get(program, "cmd")
                 for pid in psutil.get_pid_list():
                     try:
-                        logger.debug("checking %s", name)
                         if name in " ".join(psutil.Process(pid).cmdline):
+                            logger.debug("checking %s: %s" % (name, pid))
                             proc = psutil.Process(pid)
-                            mem = proc.get_memory_percent()
+                            (memrss, memvss) = proc.get_memory_info() # memory in bytes
+                            mem = memrss # we only care about resident memory
+
+                            memrss = (memrss / 1024)
+                            memvss = (memvss / 1024)
+                            mem = mem / 1024
+
+                            hmemrss = self.human(memrss)
+                            hmemvss = self.human(memvss)
+                            hmem = self.human(mem)
+
+                            logger.debug("mem: %s (%s, %s)" % (hmem, hmemrss, hmemvss))
                             if mem > memthreshold:
                                 logger.info("%s %s > %s", (name, mem, memthreshold))
                                 cmdargs = cmd.split(" ")
@@ -101,7 +119,7 @@ def main():
 
     opts, args = optp.parse_args()
 
-    if opts.verbose is None:
+    if opts.verbose in (None, False):
         logging.basicConfig(level=logging.INFO,
                             format="%(levelname)-8s %(message)s")
     else:
@@ -109,8 +127,8 @@ def main():
                             format="%(levelname)-8s %(message)s")        
 
     logger.info("starting watchdog")
-    settings = Settings()
-    if opts.daemon is None:
+    if opts.daemon in (None, False):
+        settings = Settings()
         opts.daemon = settings.cp.getboolean("DEFAULT","daemon")
 
     if opts.daemon:
