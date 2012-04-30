@@ -45,6 +45,7 @@ class Watchdog(object):
                 cmd = self.settings.cp.get(program, "cmd")
                 for pid in psutil.get_pid_list():
                     try:
+                        logger.debug("checking %s", name)
                         if name in " ".join(psutil.Process(pid).cmdline):
                             proc = psutil.Process(pid)
                             mem = proc.get_memory_percent()
@@ -88,10 +89,6 @@ def daemonize():
 
 
 def main():
-    logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)-8s %(message)s")
-
-    logger.info("starting watchdog")
     # Setup the command line arguments.
     optp = optparse.OptionParser()
 
@@ -99,8 +96,19 @@ def main():
     optp.add_option("-d", "--daemon", dest="daemon",
                     help="daemonize.", action="store_true")
 
+    optp.add_option("-v", "--verbose", dest="verbose",
+                    help="log verbosity.", action="store_true")
+
     opts, args = optp.parse_args()
 
+    if opts.verbose is None:
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)-8s %(message)s")
+    else:
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(levelname)-8s %(message)s")        
+
+    logger.info("starting watchdog")
     settings = Settings()
     if opts.daemon is None:
         opts.daemon = settings.cp.getboolean("DEFAULT","daemon")
