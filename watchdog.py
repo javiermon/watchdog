@@ -61,7 +61,7 @@ def daemonize():
     # http://code.activestate.com/recipes/66012/
     # do the UNIX double-fork magic, see Stevens" "Advanced 
     # Programming in the UNIX Environment" for details (ISBN 0201563177)
-    try: 
+    try:
         pid = os.fork() 
         if pid > 0:
             # exit first parent
@@ -95,16 +95,17 @@ def main():
     # Setup the command line arguments.
     optp = optparse.OptionParser()
 
-    # JID and password options.
+    # options.
     optp.add_option("-d", "--daemon", dest="daemon",
                     help="daemonize.", action="store_true")
 
     opts, args = optp.parse_args()
 
     settings = Settings()
-    daemon = settings.cp.getboolean("DEFAULT","daemon")
+    if opts.daemon is None:
+        opts.daemon = settings.cp.getboolean("DEFAULT","daemon")
 
-    if opts.daemon or daemon:
+    if opts.daemon:
         # daemonize
         logger.debug("daemonize")
         daemonize()
