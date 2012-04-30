@@ -6,6 +6,7 @@ import logging
 import psutil, subprocess
 
 CONFIG="watchdog.ini"
+LOG="watchdog.log"
 
 logger = logging.getLogger("watchdog")
 
@@ -122,11 +123,17 @@ def main():
     opts, args = optp.parse_args()
 
     if opts.verbose in (None, False):
-        logging.basicConfig(level=logging.INFO,
-                            format="%(levelname)-8s %(message)s")
+        loglevel = logging.INFO
     else:
-        logging.basicConfig(level=logging.DEBUG,
-                            format="%(levelname)-8s %(message)s")        
+        loglevel = loglevel.DEBUG
+
+    logging.basicConfig(level=loglevel,
+                            format="%(levelname)-8s %(message)s")
+
+    logfile = logging.FileHandler(LOG)
+    logfile.setLevel(logging.DEBUG)
+    logger.addHandler(logfile)
+
 
     logger.info("starting watchdog")
     if opts.daemon in (None, False):
