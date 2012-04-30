@@ -132,7 +132,8 @@ def main():
                             format=FULLFORMAT)
 
     logsys = handlers.SysLogHandler("/dev/log",handlers.SysLogHandler.LOG_USER)
-    logsys.setLevel(logging.DEBUG)
+    logsys.setLevel(loglevel)
+    logsys.setFormatter(logging.Formatter(FULLFORMAT))
     logger.addHandler(logsys)
 
     logger.info("starting watchdog")
