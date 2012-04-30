@@ -3,10 +3,10 @@ import sys, os, time
 import ConfigParser
 import optparse
 import logging
+from logging import handlers
 import psutil, subprocess
 
 CONFIG="watchdog.ini"
-LOG="watchdog.log"
 
 logger = logging.getLogger("watchdog")
 
@@ -130,10 +130,9 @@ def main():
     logging.basicConfig(level=loglevel,
                             format="%(levelname)-8s %(message)s")
 
-    logfile = logging.FileHandler(LOG)
-    logfile.setLevel(logging.DEBUG)
-    logger.addHandler(logfile)
-
+    logsys = handlers.SysLogHandler("/dev/log",handlers.SysLogHandler.LOG_USER)
+    logsys.setLevel(logging.DEBUG)
+    logger.addHandler(logsys)
 
     logger.info("starting watchdog")
     if opts.daemon in (None, False):
