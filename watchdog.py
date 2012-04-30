@@ -36,12 +36,13 @@ class Watchdog(object):
         self.settings = Settings()
         self.wait = self.settings.cp.getint("DEFAULT", "wait")
       
-    def human(self, num, power="Ki"):
-        powers = ["Ki", "Mi", "Gi", "Ti"]
-        while num >= 1000: #4 digits         
+    def human(self, num, power="MB"):
+        powers = ["KB", "MB", "GB", "TB"]        
+        for i in powers:
             num /= 1024.0
-            power = powers[powers.index(power)+1]
-        return "%.1f %s" % (num, power)
+            if power == i:
+                break
+        return (float(num), power)
 
     def run(self):
         while True:
@@ -56,19 +57,20 @@ class Watchdog(object):
                             logger.debug("checking %s: %s" % (name, pid))
                             proc = psutil.Process(pid)
                             (memrss, memvss) = proc.get_memory_info() # memory in bytes
-                            mem = memrss # we only care about resident memory
+                            try:
+                                (mem, frmt) = memthreshold.split(" ") # (X, KB), (X, MB), ...
+                            except:
+                                (mem, frmt) = (memthreshold, "KB")
+                    
+                            mem = float(mem)
+                            memrss = self.human(memrss, frmt)
+                            memvss = self.human(memvss, frmt)
+                            hmemrss = "%.1f %s" % memrss
+                            hmemvss = "%.1f %s" % memvss
 
-                            memrss = (memrss / 1024)
-                            memvss = (memvss / 1024)
-                            mem = mem / 1024
-
-                            hmemrss = self.human(memrss)
-                            hmemvss = self.human(memvss)
-                            hmem = self.human(mem)
-
-                            logger.debug("mem: %s (%s, %s)" % (hmem, hmemrss, hmemvss))
-                            if mem > memthreshold:
-                                logger.info("%s %s > %s", (name, mem, memthreshold))
+                            logger.debug("mem: %s, %s, threshold: %s" % (hmemrss, hmemvss, memthreshold))                            
+                            if memrss[0] > mem:
+                                logger.info("%s reached threshold", name)
                                 cmdargs = cmd.split(" ")
                                 subprocess.call(cmdargs)
                                 logger.info("%s restarted", name)
