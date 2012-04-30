@@ -7,6 +7,7 @@ from logging import handlers
 import psutil, subprocess
 
 CONFIG="watchdog.ini"
+FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
 
 logger = logging.getLogger("watchdog")
 
@@ -128,7 +129,7 @@ def main():
         loglevel = logging.DEBUG
 
     logging.basicConfig(level=loglevel,
-                            format="%(levelname)-8s %(message)s")
+                            format=FULLFORMAT)
 
     logsys = handlers.SysLogHandler("/dev/log",handlers.SysLogHandler.LOG_USER)
     logsys.setLevel(logging.DEBUG)
