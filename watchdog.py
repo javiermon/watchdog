@@ -125,7 +125,7 @@ def main():
     if opts.verbose in (None, False):
         loglevel = logging.INFO
     else:
-        loglevel = loglevel.DEBUG
+        loglevel = logging.DEBUG
 
     logging.basicConfig(level=loglevel,
                             format="%(levelname)-8s %(message)s")
