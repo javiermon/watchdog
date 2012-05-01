@@ -5,6 +5,7 @@ import optparse
 import logging
 from logging import handlers
 import psutil, subprocess
+import datetime
 
 CONFIG="watchdog.ini"
 FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
@@ -37,6 +38,7 @@ class Watchdog(object):
     def __init__(self):
         self.settings = Settings()
         self.wait = self.settings.cp.getint("DEFAULT", "wait")
+        logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
       
     def human(self, num, power="MB"):
         powers = ["KB", "MB", "GB", "TB"]        
@@ -47,7 +49,7 @@ class Watchdog(object):
         return (float(num), power)
 
     def run(self):
-        logger.info("starting watchdog")
+        logger.info("running watchdog")
         while True:
             programs = self.settings.cp.sections()
             for program in programs:
@@ -62,7 +64,7 @@ class Watchdog(object):
                             (memrss, memvss) = proc.get_memory_info() # memory in bytes
                             try:
                                 (mem, frmt) = memthreshold.split(" ") # (X, KB), (X, MB), ...
-                            except:
+                            except ValueError:
                                 (mem, frmt) = (memthreshold, "KB")
                     
                             mem = float(mem)
@@ -137,17 +139,13 @@ def main():
     logsys.setFormatter(logging.Formatter(FULLFORMAT))
     logger.addHandler(logsys)
 
-    if opts.daemon in (None, False):
-        settings = Settings()
-        opts.daemon = settings.cp.getboolean("DEFAULT","daemon")
-
     if opts.daemon:
-        # daemonize
         logger.debug("daemonize")
         daemonize()
 
+    logger.debug("watchdog")
     wg = Watchdog()
     wg.run()
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     main()
