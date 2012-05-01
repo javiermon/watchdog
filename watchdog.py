@@ -47,6 +47,7 @@ class Watchdog(object):
         return (float(num), power)
 
     def run(self):
+        logger.info("starting watchdog")
         while True:
             programs = self.settings.cp.sections()
             for program in programs:
@@ -131,12 +132,11 @@ def main():
     logging.basicConfig(level=loglevel,
                             format=FULLFORMAT)
 
-    logsys = handlers.SysLogHandler("/dev/log",handlers.SysLogHandler.LOG_USER)
+    logsys = handlers.SysLogHandler("/dev/log", handlers.SysLogHandler.LOG_USER)
     logsys.setLevel(loglevel)
     logsys.setFormatter(logging.Formatter(FULLFORMAT))
     logger.addHandler(logsys)
 
-    logger.info("starting watchdog")
     if opts.daemon in (None, False):
         settings = Settings()
         opts.daemon = settings.cp.getboolean("DEFAULT","daemon")
