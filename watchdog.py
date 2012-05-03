@@ -7,7 +7,6 @@ from logging import handlers
 import psutil, subprocess
 import datetime
 
-CONFIG="watchdog.ini"
 FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
 
 logger = logging.getLogger("watchdog")
@@ -17,9 +16,9 @@ class Settings(object):
     """
     __shared_state = {"cp": ConfigParser.RawConfigParser(allow_no_value=True),}
 
-    def __init__(self):
+    def __init__(self, conffile):
         self.__dict__ = self.__shared_state
-        self.cp.read(CONFIG)
+        self.cp.read(conffile)
         
     def getSection(self, section):
         """Returns the whole section in a dictionary
@@ -35,8 +34,8 @@ class Watchdog(object):
     """Watchdog
     """
 
-    def __init__(self):
-        self.settings = Settings()
+    def __init__(self, settings):
+        self.settings = settings
         self.wait = self.settings.cp.getint("DEFAULT", "wait")
         logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
       
@@ -130,7 +129,15 @@ def main():
     optp.add_option("-v", "--verbose", dest="verbose",
                     help="log verbosity.", action="store_true")
 
+    optp.add_option("-c", "--conf", dest="conf",
+                    help="configuration file.")
+
     opts, args = optp.parse_args()
+
+    if opts.conf is None:
+        print >> sys.stderr, "conf file not provided"
+        optp.print_help()
+        sys.exit(1)
 
     if opts.verbose in (None, False):
         loglevel = logging.INFO
@@ -150,7 +157,8 @@ def main():
         daemonize()
 
     logger.debug("watchdog")
-    wg = Watchdog()
+    settings = Settings(opts.conf)
+    wg = Watchdog(settings)
     wg.run()
 
 if __name__ == "__main__":    
