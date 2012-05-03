@@ -107,6 +107,12 @@ def daemonize():
         if pid > 0:
             # exit from second parent, print eventual PID before
             logger.info("Daemon PID %d" % pid)
+            try:
+                pidfile = open("/var/run/%s.pid" % os.path.basename(__file__), "w")
+                pidfile.write(str(pid))
+                pidfile.close()
+            except IOError:
+                logger.debug("Could not open pid file")
             sys.exit(0) 
     except OSError, e: 
         print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
