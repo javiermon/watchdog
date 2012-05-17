@@ -1,4 +1,10 @@
 #!/usr/bin/python
+
+#
+# Watchdog script to monitor processes. Uses plugin system for each monitor.
+# Note: it's self contained (1 file) on purpose for easier deployment.
+#
+
 import sys, os, time
 import ConfigParser
 import optparse
@@ -30,15 +36,44 @@ class Settings(object):
         return result
 
 
-class Watchdog(object):
-    """Watchdog
-    """
+class WatchdogPlugin(object):
+    @staticmethod
+    def getPlugin(name, proc, threshold, cmd):
+        plugins = {'memory' : MemoryPlugin, 'cpu' : CpuPlugin }
+        try:            
+            plugins[name](name, proc, threshold, cmd)
+        except KeyError:
+            raise Exception("Plugin %s does not exist")
 
-    def __init__(self, settings):
-        self.settings = settings
-        self.wait = self.settings.cp.getint("DEFAULT", "wait")
-        logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
-      
+    def __init__(self, name, proc, threshold, cmd):
+        self.name
+        self.proc = proc
+        self.threshold = threshold
+        self.cmd = cmd
+
+    def run(self):
+        logger.debug("checking %s: %s" % (self.name, self.proc.pid))
+        if self.check(self.threshold):
+            logger.info("%s reached threshold", self.name)
+            self.launcher(self.cmd)
+            logger.info("%s triggered", self.name)
+
+    def check(self, value):
+        pass
+
+    def lancher(self, cmd):
+        cmdargs = cmd.split(" ")
+        subprocess.call(cmdargs)
+
+class CpuPlugin(WatchdogPlugin):
+    def check(self, threshold):
+        # blocking call:
+        cpu = self.proc.get_cpu_percent(1)
+        logger.debug("cpu: %s, threshold: %s" % (cpu, threshold))
+        return cpu > threshold
+
+class MemoryPlugin(WatchdogPlugin):
+
     def human(self, num, power="MB"):
         powers = ["KB", "MB", "GB", "TB"]        
         for i in powers:
@@ -47,37 +82,48 @@ class Watchdog(object):
                 break
         return (float(num), power)
 
+    def check(self, threshold):
+        (memrss, memvss) = self.proc.get_memory_info() # memory in bytes
+        try:
+            (mem, frmt) = threshold.split(" ") # (X, KB), (X, MB), ...
+        except ValueError:
+            (mem, frmt) = (threshold, "KB")
+        
+        mem = float(mem)
+        memrss = self.human(memrss, frmt)
+        memvss = self.human(memvss, frmt)
+        hmemrss = "%.1f %s" % memrss
+        hmemvss = "%.1f %s" % memvss
+
+        logger.debug("mem: %s, %s, threshold: %s" % (hmemrss, hmemvss, threshold))                            
+        return memrss[0] > mem
+
+class Watchdog(object):
+    """Watchdog
+    """
+
+    def __init__(self, settings):
+        self.settings = settings
+        self.wait = self.settings.cp.getint("DEFAULT", "wait")
+        logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
+
     def run(self):
         logger.info("running watchdog")
         while True:
             programs = self.settings.cp.sections()
             for program in programs:
                 name = self.settings.cp.get(program, "name")
-                memthreshold = self.settings.cp.get(program, "mem")
+                plugin = self.settings.cp.get(program, "plugin")
+                memthreshold = self.settings.cp.get(program, "value")
                 cmd = self.settings.cp.get(program, "cmd")
+
                 for pid in psutil.get_pid_list():
                     try:
-                        if name in " ".join(psutil.Process(pid).cmdline):
-                            logger.debug("checking %s: %s" % (name, pid))
-                            proc = psutil.Process(pid)
-                            (memrss, memvss) = proc.get_memory_info() # memory in bytes
-                            try:
-                                (mem, frmt) = memthreshold.split(" ") # (X, KB), (X, MB), ...
-                            except ValueError:
-                                (mem, frmt) = (memthreshold, "KB")
-                    
-                            mem = float(mem)
-                            memrss = self.human(memrss, frmt)
-                            memvss = self.human(memvss, frmt)
-                            hmemrss = "%.1f %s" % memrss
-                            hmemvss = "%.1f %s" % memvss
-
-                            logger.debug("mem: %s, %s, threshold: %s" % (hmemrss, hmemvss, memthreshold))                            
-                            if memrss[0] > mem:
-                                logger.info("%s reached threshold", name)
-                                cmdargs = cmd.split(" ")
-                                subprocess.call(cmdargs)
-                                logger.info("%s restarted", name)
+                        proc = psutil.Process(pid)
+                        if name in " ".join(proc.cmdline):
+                            # create plugin and execute it
+                            plugin = WatchdogPlugin.getPlugin(name, proc, threshold, cmd)
+                            plugin.run()
                     except psutil.error.NoSuchProcess:
                         logger.debug("NoSuchProcess: %s" % pid)
             time.sleep(self.wait)
