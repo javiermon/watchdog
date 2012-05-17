@@ -73,7 +73,6 @@ class CpuPlugin(WatchdogPlugin):
         return cpu > threshold
 
 class MemoryPlugin(WatchdogPlugin):
-
     def human(self, num, power="MB"):
         powers = ["KB", "MB", "GB", "TB"]        
         for i in powers:
