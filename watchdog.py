@@ -38,15 +38,15 @@ class Settings(object):
 
 class WatchdogPlugin(object):
     @staticmethod
-    def getPlugin(name, proc, threshold, cmd):
-        plugins = {'memory' : MemoryPlugin, 'cpu' : CpuPlugin }
+    def getPlugin(plugin, name, proc, threshold, cmd):
+        plugins = {'mem' : MemoryPlugin, 'cpu' : CpuPlugin }
         try:            
-            plugins[name](name, proc, threshold, cmd)
+            return plugins[plugin](name, proc, threshold, cmd)
         except KeyError:
-            raise Exception("Plugin %s does not exist")
+            raise Exception("Plugin %s does not exist" % plugin)
 
     def __init__(self, name, proc, threshold, cmd):
-        self.name
+        self.name = name
         self.proc = proc
         self.threshold = threshold
         self.cmd = cmd
@@ -61,7 +61,7 @@ class WatchdogPlugin(object):
     def check(self, value):
         pass
 
-    def lancher(self, cmd):
+    def launcher(self, cmd):
         cmdargs = cmd.split(" ")
         subprocess.call(cmdargs)
 
@@ -113,7 +113,7 @@ class Watchdog(object):
             for program in programs:
                 name = self.settings.cp.get(program, "name")
                 plugin = self.settings.cp.get(program, "plugin")
-                memthreshold = self.settings.cp.get(program, "value")
+                threshold = self.settings.cp.get(program, "value")
                 cmd = self.settings.cp.get(program, "cmd")
 
                 for pid in psutil.get_pid_list():
@@ -121,7 +121,7 @@ class Watchdog(object):
                         proc = psutil.Process(pid)
                         if name in " ".join(proc.cmdline):
                             # create plugin and execute it
-                            plugin = WatchdogPlugin.getPlugin(name, proc, threshold, cmd)
+                            plugin = WatchdogPlugin.getPlugin(plugin, name, proc, threshold, cmd)
                             plugin.run()
                     except psutil.error.NoSuchProcess:
                         logger.debug("NoSuchProcess: %s" % pid)
