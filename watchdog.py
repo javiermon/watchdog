@@ -17,25 +17,6 @@ FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
 
 logger = logging.getLogger("watchdog")
 
-class Settings(object):
-    """Application Settings
-    """
-    __shared_state = {"cp": ConfigParser.RawConfigParser(allow_no_value=True),}
-
-    def __init__(self, conffile):
-        self.__dict__ = self.__shared_state
-        self.cp.read(conffile)
-        
-    def getSection(self, section):
-        """Returns the whole section in a dictionary
-        """
-        options = self.cp.options(section)
-        result = {}
-        for option in options:
-            result[option] = self.cp.get(section, option)
-        return result
-
-
 class WatchdogPlugin(object):
     @staticmethod
     def getPlugin(plugin, name, proc, threshold, cmd):
@@ -102,19 +83,20 @@ class Watchdog(object):
     """
 
     def __init__(self, settings):
-        self.settings = settings
-        self.wait = self.settings.cp.getint("DEFAULT", "wait")
+        self.settings = ConfigParser.ConfigParser()
+        self.settings.read(settings)
+        self.wait = self.settings.getint("DEFAULT", "wait")
         logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
 
     def run(self):
         logger.info("running watchdog")
         while True:
-            programs = self.settings.cp.sections()
+            programs = self.settings.sections()
             for program in programs:
-                name = self.settings.cp.get(program, "name")
-                plugin = self.settings.cp.get(program, "plugin")
-                threshold = self.settings.cp.get(program, "value")
-                cmd = self.settings.cp.get(program, "cmd")
+                name = self.settings.get(program, "name")
+                plugin = self.settings.get(program, "plugin")
+                threshold = self.settings.get(program, "value")
+                cmd = self.settings.get(program, "cmd")
 
                 for pid in psutil.get_pid_list():
                     try:
@@ -204,8 +186,7 @@ def main():
         daemonize()
 
     logger.debug("watchdog")
-    settings = Settings(opts.conf)
-    wg = Watchdog(settings)
+    wg = Watchdog(opts.conf)
     wg.run()
 
 if __name__ == "__main__":    
