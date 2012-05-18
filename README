@@ -10,4 +10,8 @@ It's easy to extend via plugins. Currently supports:
 
 Includes a sample configuration file.
 
+Dependencies:
+- python
+- python-psutils
+
 Enjoy!
