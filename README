@@ -1,0 +1,13 @@
+WATCHDOG
+--------
+
+Simple python script that checks if programs behave as they should.
+Supports daemon mode. Writes to sylog and checking frecuency is configurable.
+
+It's easy to extend via plugins. Currently supports:
+- cpu plugin
+- memory plugin
+
+Includes a sample configuration file.
+
+Enjoy!
