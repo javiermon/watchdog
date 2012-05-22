@@ -174,14 +174,14 @@ def main():
     # log to stderr in fg
     logging.basicConfig(level=loglevel,
                             format=FULLFORMAT)
-
-    # log to syslog in bg
-    logsys = handlers.SysLogHandler("/dev/log", handlers.SysLogHandler.LOG_USER)
-    logsys.setLevel(loglevel)
-    logsys.setFormatter(logging.Formatter(FULLFORMAT))
-    logger.addHandler(logsys)
-
+    
     if opts.daemon:
+        # log to syslog in bg
+    	logsys = handlers.SysLogHandler("/dev/log", handlers.SysLogHandler.LOG_USER)
+    	logsys.setLevel(loglevel)
+    	logsys.setFormatter(logging.Formatter(FULLFORMAT))
+    	logger.addHandler(logsys)
+
         logger.debug("daemonize")
         daemonize()
 
