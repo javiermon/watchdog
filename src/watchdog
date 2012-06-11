@@ -192,6 +192,7 @@ def main():
 
     
     if opts.daemon:
+        daemonize()
         # log to syslog in bg
     	logsys = handlers.SysLogHandler("/dev/log", handlers.SysLogHandler.LOG_USER)
     	logger.setLevel(loglevel)
@@ -199,7 +200,7 @@ def main():
     	logger.addHandler(logsys)
 
         logger.debug("daemonize")
-        daemonize()
+
     else:
         # log to stderr in fg
         logging.basicConfig(level=loglevel,
