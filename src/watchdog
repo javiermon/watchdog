@@ -5,7 +5,7 @@
 # Note: it's self contained (1 file) on purpose for easier deployment.
 #
 
-import sys, os, time
+import sys, os, time, atexit
 import ConfigParser
 import optparse
 import logging
@@ -135,17 +135,34 @@ def daemonize():
         if pid > 0:
             # exit from second parent, print eventual PID before
             logger.info("Daemon PID %d" % pid)
-            try:
-                pidfile = open("/var/run/%s.pid" % os.path.basename(__file__), "w")
-                pidfile.write(str(pid))
-                pidfile.close()
-            except IOError:
-                logger.debug("Could not open pid file")
             sys.exit(0) 
     except OSError, e: 
         print >> sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
         sys.exit(1) 
 
+    try:
+        pidfilename = "/var/run/%s.pid" % os.path.basename(__file__)
+        pidfile = open(pidfilename, "w")
+        pidfile.write(str(os.getpid()))
+        pidfile.close()
+        atexit.register(lambda : os.remove(pidfilename))
+    except IOError:
+        logger.debug("Could not open pid file")
+
+    # Redirect standard file descriptors.
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    stdin = DEVNULL
+    stdout = DEVNULL
+    stderr = DEVNULL
+
+    si = open(stdin, 'r')
+    so = open(stdout, 'a+')
+    se = open(stderr, 'a+', 0)
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
 
 def main():
     # Setup the command line arguments.
