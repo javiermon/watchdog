@@ -14,7 +14,7 @@ import psutil, subprocess
 import datetime
 
 FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
-
+DEVNULL = "/dev/null"
 logger = logging.getLogger("watchdog")
 
 class WatchdogPlugin(object):
