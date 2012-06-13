@@ -14,7 +14,6 @@ import psutil, subprocess
 import datetime
 
 FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
-DEVNULL = "/dev/null"
 logger = logging.getLogger("watchdog")
 
 class WatchdogPlugin(object):
@@ -153,9 +152,10 @@ def daemonize():
     sys.stdout.flush()
     sys.stderr.flush()
 
-    stdin = DEVNULL
-    stdout = DEVNULL
-    stderr = DEVNULL
+    devnull = "/dev/null"
+    stdin = devnull
+    stdout = devnull
+    stderr = devnull
 
     si = open(stdin, 'r')
     so = open(stdout, 'a+')
