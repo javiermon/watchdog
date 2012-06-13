@@ -184,6 +184,8 @@ def main():
         print >> sys.stderr, "conf file not provided"
         optp.print_help()
         sys.exit(1)
+    else:
+        opts.conf = os.path.abspath(opts.conf)
 
     if opts.verbose in (None, False):
         loglevel = logging.INFO
