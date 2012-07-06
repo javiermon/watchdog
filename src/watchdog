@@ -15,6 +15,7 @@ import datetime
 
 FULLFORMAT = "%(asctime)s  [%(levelname)s]  [%(module)s] %(message)s"
 logger = logging.getLogger("watchdog")
+CPUTIME = 60
 
 class WatchdogPlugin(object):
     @staticmethod
@@ -49,7 +50,7 @@ class WatchdogPlugin(object):
 class CpuPlugin(WatchdogPlugin):
     def check(self, threshold):
         # blocking call:
-        cpu = self.proc.get_cpu_percent(1)
+        cpu = self.proc.get_cpu_percent(CPUTIME)
         logger.debug("cpu: %s, threshold: %s" % (cpu, threshold))
         return cpu > threshold
 
