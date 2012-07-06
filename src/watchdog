@@ -84,9 +84,9 @@ class Watchdog(object):
     """
 
     def __init__(self, settings):
-        self.settings = ConfigParser.ConfigParser()
         if not os.path.isfile(settings):
             raise Exception("%s doesn't exist or is not a regular file" % settings)
+        self.settings = ConfigParser.ConfigParser()
         self.settings.read(settings)
         self.wait = self.settings.getint("DEFAULT", "wait")
         logger.debug("timer set to %s" % datetime.timedelta(seconds=self.wait))
