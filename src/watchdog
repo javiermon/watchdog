@@ -135,7 +135,7 @@ def daemonize():
         pid = os.fork() 
         if pid > 0:
             # exit from second parent, print eventual PID before
-            logger.info("Daemon PID %d" % pid)
+            print >> sys.stderr, "Daemon PID %d" % pid
             sys.exit(0) 
     except OSError, e: 
         print >> sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
@@ -148,7 +148,8 @@ def daemonize():
         pidfile.close()
         atexit.register(lambda : os.remove(pidfilename))
     except IOError:
-        logger.debug("Could not open pid file")
+        print >> sys.stderr, "Could not open pid file"
+        sys.exit(0) 
 
     # Redirect standard file descriptors.
     sys.stdout.flush()
