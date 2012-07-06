@@ -22,7 +22,8 @@ class WatchdogPlugin(object):
         plugins = {'mem' : MemoryPlugin, 'cpu' : CpuPlugin }
         try:            
             return plugins[plugin](name, proc, threshold, cmd)
-        except KeyError:
+        except KeyError, e:
+            logger.error(e)
             raise Exception("Plugin %s does not exist" % plugin)
 
     def __init__(self, name, proc, threshold, cmd):
