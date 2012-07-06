@@ -95,7 +95,7 @@ class Watchdog(object):
             programs = self.settings.sections()
             for program in programs:
                 name = self.settings.get(program, "name")
-                plugin = self.settings.get(program, "plugin")
+                pluginname = self.settings.get(program, "plugin")
                 threshold = self.settings.get(program, "value")
                 cmd = self.settings.get(program, "cmd")
 
@@ -104,7 +104,7 @@ class Watchdog(object):
                         proc = psutil.Process(pid)
                         if name in " ".join(proc.cmdline):
                             # create plugin and execute it
-                            plugin = WatchdogPlugin.getPlugin(plugin, name, proc, threshold, cmd)
+                            plugin = WatchdogPlugin.getPlugin(pluginname, name, proc, threshold, cmd)
                             plugin.run()
                     except psutil.error.NoSuchProcess:
                         logger.debug("NoSuchProcess: %s" % pid)
